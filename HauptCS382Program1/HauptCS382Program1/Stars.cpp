@@ -47,6 +47,8 @@ const float STAR_SPIN_INC = 0.3f;                   // Star rotation rate.      
 const float PULSATION_INC = 0.03f;                  // Star pulsation rate.             //
 
 
+bool gameOver = false;								// Global Bool to check if game has ended. It should be set to true when collision threshold is met.
+
 													/////////////////////////////////////////////////////
 													// 2D star-shaped polygon class (for convenience). //
 													/////////////////////////////////////////////////////
@@ -80,6 +82,9 @@ public:
 	float pulsationInc;   // Star's current pulsation increment.               //
 	int   freezeLimit;    // Star's current freeze time limit.                 //
 	CTime freezeTime;     // Snapshot of time when star was frozen.            //
+
+	//NEW
+	int collisionCnt;	// Number of times star has collided. I can't spell :( //
 
 						  /* Default constructor. */
 	Star::Star()
@@ -206,6 +211,8 @@ void MouseClick(int mouseButton, int mouseState, int mouseXPosition, int mouseYP
 		}
 	}
 }
+
+// Can this be used to track collisions between stars? //
 
 /* Function to traverse the star list until the current star contains the */
 /* current mouse position, whereupon that star's index is returned. If no */
@@ -344,7 +351,9 @@ void Display()
 {
 	int i;
 
-	glClear(GL_COLOR_BUFFER_BIT);
+	// if(gameOver == false) // check if game has ended / collision threshold has been met
+	glClear(GL_COLOR_BUFFER_BIT); // prevents trippy end effect. Do not call when all stars finish colliding. 
+
 	glLineWidth(2);
 
 	// Display each polygon, applying its spin as needed. //
