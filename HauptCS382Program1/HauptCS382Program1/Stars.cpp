@@ -356,7 +356,7 @@ void UpdateTitleBar()
 	for (int i = 0; i < NBR_STARS; i++) {
 		if (polyList[i].freezeLimit > 0)
 			frozenCount++;
-		if (polyList[i].collisionCnt > 0)
+		if (polyList[i].collisionCnt > 0) // will not work
 			collisions++;
 	}
 	
