@@ -148,6 +148,10 @@ void ResizeWindow(GLsizei w, GLsizei h);
 void ConvertToCharacterArray(int value, char valueArray[]);
 void UpdateTitleBar();
 
+// NEW Collision detection
+// based off of FindMouseHit()
+int DetectCollision(GLfloat posX, GLfloat posY);
+
 
 //////////////////////
 // Global Variables //
@@ -227,6 +231,23 @@ int FindMouseHit(GLfloat mouseX, GLfloat mouseY)
 		if (sqrt(pow(mouseX - polyList[i].x, 2) + pow(mouseY - polyList[i].y, 2)) <
 			0.9 * polyList[i].pulsation * STAR_RADIUS)
 			return i;
+	}
+	return -1;
+}
+
+/* Detect if two stars collide */
+int DetectCollision(GLfloat posX, GLfloat posY) {
+	for (int i = 0; i < NBR_STARS; i++)
+	{
+		// Rather than determining whether the collision occured precisely within the
+		// star's boundaries, this function merely checks whether the colision is within
+		// 90% of the distance between the star's center and any of its tip vertices.
+		if (sqrt(pow(posX - polyList[i].x, 2) + pow(posY - polyList[i].y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) {
+			//increment collision counter for star collided against
+			polyList[i].collisionCnt++;
+			return i;
+		}
+			
 	}
 	return -1;
 }
@@ -329,19 +350,32 @@ void AdjustToWindow(Star &currentStar)
 /* the number of frozen and unfrozen stars.            */
 void UpdateTitleBar()
 {
-	char label[60] = "PULSATING STARS: ";
+	char label[100] = "PULSATING STARS: ";
 	int frozenCount = 0;
-	for (int i = 0; i < NBR_STARS; i++)
+	int collisions = 0; // total number of collitions
+	for (int i = 0; i < NBR_STARS; i++) {
 		if (polyList[i].freezeLimit > 0)
 			frozenCount++;
+		if (polyList[i].collisionCnt > 0)
+			collisions++;
+	}
+	
 	char frozenLabel[5] = "";
 	ConvertToCharacterArray(frozenCount, frozenLabel);
-	strcat_s(label, 60, frozenLabel);
-	strcat_s(label, 60, " FROZEN STARS; ");
+	strcat_s(label, 100, frozenLabel);
+	strcat_s(label, 100, " FROZEN STARS; ");
+	
 	char unfrozenLabel[5] = "";
 	ConvertToCharacterArray(NBR_STARS - frozenCount, unfrozenLabel);
-	strcat_s(label, 60, unfrozenLabel);
-	strcat_s(label, 60, " UNFROZEN STARS");
+	strcat_s(label, 100, unfrozenLabel);
+	strcat_s(label, 100, " UNFROZEN STARS ");
+
+	// Collisions
+	char collisionLabel[5] = "";
+	ConvertToCharacterArray(collisions, collisionLabel);
+	strcat_s(label, 100, collisionLabel);
+	strcat_s(label, 100, " Collisions");
+
 	glutSetWindowTitle(label);
 }
 
@@ -359,6 +393,14 @@ void Display()
 	// Display each polygon, applying its spin as needed. //
 	for (i = 0; i < NBR_STARS; i++)
 		polyList[i].draw();
+
+	// call to collision detection fctn here?
+	int collisionDetected;
+	for (i = 0; i < NBR_STARS; i++)
+		collisionDetected = DetectCollision(polyList[i].x, polyList[i].y);
+		if(collisionDetected != -1) {
+			polyList[i].collisionCnt++;
+		}
 
 	glutSwapBuffers();
 	glFlush();
