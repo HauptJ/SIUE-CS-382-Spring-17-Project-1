@@ -11,6 +11,7 @@
 #include <ctime>			// Header File For Accessing System Time
 #include <atltime.h>        // Header File For Processing Time Intervals
 #include <cstring>          // Header File For Accessing String Type
+#include <iostream>			// Header File for debug print messages
 using namespace std;
 
 //////////////////////
@@ -245,6 +246,8 @@ int DetectCollision(GLfloat posX, GLfloat posY) {
 		if (sqrt(pow(posX - polyList[i].x, 2) + pow(posY - polyList[i].y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) {
 			//increment collision counter for star collided against
 			polyList[i].collisionCnt++;
+			//DEBUG
+			cout << "Collision Detected " << i << endl;
 			return i;
 		}
 			
