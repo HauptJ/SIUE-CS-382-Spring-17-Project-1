@@ -14,6 +14,24 @@
 #include <iostream>			// Header File for debug print messages
 using namespace std;
 
+/////////////////////////
+// Function Prototypes //
+/////////////////////////
+void MouseClick(int mouseButton, int mouseState, int mouseXPosition, int mouseYPosition);
+int  FindMouseHit(GLfloat mouseX, GLfloat mouseY);
+void TimerFunction(int value);
+void AdjustToWindow(Star &currentStar);
+void Display();
+void ResizeWindow(GLsizei w, GLsizei h);
+void ConvertToCharacterArray(int value, char valueArray[]);
+void UpdateTitleBar();
+
+// NEW Collision detection
+// based off of FindMouseHit()
+//int DetectCollision(GLfloat posX, GLfloat posY);
+int DetectCollision(Star &currentStar);
+
+
 //////////////////////
 // Global Constants //
 //////////////////////
@@ -49,6 +67,15 @@ const float PULSATION_INC = 0.03f;                  // Star pulsation rate.     
 
 
 bool gameOver = false;								// Global Bool to check if game has ended. It should be set to true when collision threshold is met.
+
+//////////////////////
+// Global Variables //
+//////////////////////
+GLint   currWindowSize[2] = { 1000, 750 };            // Window size in pixels. //
+GLfloat windowWidth = 4.0;                      // Resized window width.  //
+GLfloat windowHeight = 3.0;                      // Resized window height. //
+Star    polyList[NBR_STARS];                             // Current polygon list.  //
+CTime   startTime = CTime::GetCurrentTime();  // Game start time.       //
 
 													/////////////////////////////////////////////////////
 													// 2D star-shaped polygon class (for convenience). //
@@ -137,32 +164,6 @@ public:
 };
 
 
-/////////////////////////
-// Function Prototypes //
-/////////////////////////
-void MouseClick(int mouseButton, int mouseState, int mouseXPosition, int mouseYPosition);
-int  FindMouseHit(GLfloat mouseX, GLfloat mouseY);
-void TimerFunction(int value);
-void AdjustToWindow(Star &currentStar);
-void Display();
-void ResizeWindow(GLsizei w, GLsizei h);
-void ConvertToCharacterArray(int value, char valueArray[]);
-void UpdateTitleBar();
-
-// NEW Collision detection
-// based off of FindMouseHit()
-int DetectCollision(GLfloat posX, GLfloat posY);
-
-
-//////////////////////
-// Global Variables //
-//////////////////////
-GLint   currWindowSize[2] = { 1000, 750 };            // Window size in pixels. //
-GLfloat windowWidth = 4.0;                      // Resized window width.  //
-GLfloat windowHeight = 3.0;                      // Resized window height. //
-Star    polyList[NBR_STARS];                             // Current polygon list.  //
-CTime   startTime = CTime::GetCurrentTime();  // Game start time.       //
-
 
 											  /* The main function: uses the OpenGL Utility Toolkit to set */
 											  /* the window up to display the window and its contents.     */
@@ -236,8 +237,9 @@ int FindMouseHit(GLfloat mouseX, GLfloat mouseY)
 	return -1;
 }
 
-/* Detect if two stars collide */
-int DetectCollision(GLfloat posX, GLfloat posY) {
+/* Detect if two stars collide */ //WORKS!!!
+//try passing current star
+int DetectCollision(GLfloat posX, GLfloat incX, GLfloat posY, GLfloat incY) {
 	for (int i = 0; i < NBR_STARS; i++)
 	{
 		// Rather than determining whether the collision occured precisely within the
@@ -246,6 +248,10 @@ int DetectCollision(GLfloat posX, GLfloat posY) {
 		if (sqrt(pow(posX - polyList[i].x, 2) + pow(posY - polyList[i].y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) {
 			//increment collision counter for star collided against
 			polyList[i].collisionCnt++;
+			//swap inverse trajectories on collision
+			//polyList[i].xInc = incX * -1; 
+			//polyList[i].yInc = incY * -1;
+			polyList[i].xInc = polyList
 			//DEBUG
 			cout << "Collision Detected " << i << endl;
 			return i;
@@ -400,9 +406,12 @@ void Display()
 	// call to collision detection fctn here?
 	int collisionDetected;
 	for (i = 0; i < NBR_STARS; i++)
-		collisionDetected = DetectCollision(polyList[i].x, polyList[i].y);
+		collisionDetected = DetectCollision(polyList[i].x, polyList[i].xInc, polyList[i].y, polyList[i].yInc);
+		//DEBUG
 		if(collisionDetected != -1) {
 			polyList[i].collisionCnt++;
+			cout << "collision count for: " << i <<" is: "<< polyList[i].collisionCnt << endl;
+
 		}
 
 	glutSwapBuffers();
