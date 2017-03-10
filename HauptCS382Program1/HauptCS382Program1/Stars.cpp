@@ -14,22 +14,8 @@
 #include <iostream>			// Header File for debug print messages
 using namespace std;
 
-/////////////////////////
-// Function Prototypes //
-/////////////////////////
-void MouseClick(int mouseButton, int mouseState, int mouseXPosition, int mouseYPosition);
-int  FindMouseHit(GLfloat mouseX, GLfloat mouseY);
-void TimerFunction(int value);
-void AdjustToWindow(Star &currentStar);
-void Display();
-void ResizeWindow(GLsizei w, GLsizei h);
-void ConvertToCharacterArray(int value, char valueArray[]);
-void UpdateTitleBar();
 
-// NEW Collision detection
-// based off of FindMouseHit()
-//int DetectCollision(GLfloat posX, GLfloat posY);
-int DetectCollision(Star &currentStar);
+
 
 
 //////////////////////
@@ -65,17 +51,9 @@ const float STAR_SPEED = 0.015f;                 // Star velocity.              
 const float STAR_SPIN_INC = 0.3f;                   // Star rotation rate.              //
 const float PULSATION_INC = 0.03f;                  // Star pulsation rate.             //
 
+//NEW
+const int COLLISION_LIMIT = 5;					// Max possible collions for a star. //
 
-bool gameOver = false;								// Global Bool to check if game has ended. It should be set to true when collision threshold is met.
-
-//////////////////////
-// Global Variables //
-//////////////////////
-GLint   currWindowSize[2] = { 1000, 750 };            // Window size in pixels. //
-GLfloat windowWidth = 4.0;                      // Resized window width.  //
-GLfloat windowHeight = 3.0;                      // Resized window height. //
-Star    polyList[NBR_STARS];                             // Current polygon list.  //
-CTime   startTime = CTime::GetCurrentTime();  // Game start time.       //
 
 													/////////////////////////////////////////////////////
 													// 2D star-shaped polygon class (for convenience). //
@@ -141,6 +119,9 @@ public:
 
 		// Star initialized in unfrozen state. //
 		freezeLimit = 0;
+
+		// Initialize collision count
+		collisionCnt = 0;
 	}
 
 	/* Render the star-shaped polygon. */
@@ -163,6 +144,33 @@ public:
 	}
 };
 
+/////////////////////////
+// Function Prototypes //
+/////////////////////////
+void MouseClick(int mouseButton, int mouseState, int mouseXPosition, int mouseYPosition);
+int  FindMouseHit(GLfloat mouseX, GLfloat mouseY);
+void TimerFunction(int value);
+void AdjustToWindow(Star &currentStar);
+void Display();
+void ResizeWindow(GLsizei w, GLsizei h);
+void ConvertToCharacterArray(int value, char valueArray[]);
+void UpdateTitleBar();
+
+// NEW Collision detection
+// based off of FindMouseHit()
+//int DetectCollision(GLfloat posX, GLfloat posY);
+int DetectCollision(Star &currentStar);
+
+//////////////////////
+// Global Variables //
+//////////////////////
+GLint   currWindowSize[2] = { 1000, 750 };            // Window size in pixels. //
+GLfloat windowWidth = 4.0;                      // Resized window width.  //
+GLfloat windowHeight = 3.0;                      // Resized window height. //
+Star    polyList[NBR_STARS];                             // Current polygon list.  //
+CTime   startTime = CTime::GetCurrentTime();  // Game start time.       //
+
+bool gameOver = false;								// Global Bool to check if game has ended. It should be set to true when collision threshold is met.
 
 
 											  /* The main function: uses the OpenGL Utility Toolkit to set */
@@ -239,21 +247,28 @@ int FindMouseHit(GLfloat mouseX, GLfloat mouseY)
 
 /* Detect if two stars collide */ //WORKS!!!
 //try passing current star
-int DetectCollision(GLfloat posX, GLfloat incX, GLfloat posY, GLfloat incY) {
+int DetectCollision(Star &currentStar) {
 	for (int i = 0; i < NBR_STARS; i++)
 	{
 		// Rather than determining whether the collision occured precisely within the
 		// star's boundaries, this function merely checks whether the colision is within
 		// 90% of the distance between the star's center and any of its tip vertices.
-		if (sqrt(pow(posX - polyList[i].x, 2) + pow(posY - polyList[i].y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) {
+		if (sqrt(pow(currentStar.x - polyList[i].x, 2) + pow(currentStar.y - polyList[i].y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) {
+			//increnent collison for star colliding
+			if (currentStar.collisionCnt < COLLISION_LIMIT) { // make sure collision limit per star is not exceeded
+				currentStar.collisionCnt++;
+			}
 			//increment collision counter for star collided against
-			polyList[i].collisionCnt++;
+			if (polyList[i].collisionCnt < COLLISION_LIMIT) {
+				polyList[i].collisionCnt++;
+			}
 			//swap inverse trajectories on collision
-			//polyList[i].xInc = incX * -1; 
-			//polyList[i].yInc = incY * -1;
-			polyList[i].xInc = polyList
+			currentStar.xInc = polyList[i].xInc * -1;
+			currentStar.yInc = polyList[i].yInc * -1;
+			polyList[i].xInc = currentStar.xInc * -1; 
+			polyList[i].yInc = currentStar.yInc * -1;
 			//DEBUG
-			cout << "Collision Detected " << i << endl;
+			cout << "Collision Detected: " << i << " collisions: " << polyList[i].collisionCnt << endl;
 			return i;
 		}
 			
@@ -394,8 +409,9 @@ void Display()
 {
 	int i;
 
-	// if(gameOver == false) // check if game has ended / collision threshold has been met
-	glClear(GL_COLOR_BUFFER_BIT); // prevents trippy end effect. Do not call when all stars finish colliding. 
+	if (gameOver == false) {  // check if game has ended / collision threshold has been met
+		glClear(GL_COLOR_BUFFER_BIT); // prevents trippy end effect. Do not call when all stars finish colliding. 
+	}
 
 	glLineWidth(2);
 
@@ -406,13 +422,13 @@ void Display()
 	// call to collision detection fctn here?
 	int collisionDetected;
 	for (i = 0; i < NBR_STARS; i++)
-		collisionDetected = DetectCollision(polyList[i].x, polyList[i].xInc, polyList[i].y, polyList[i].yInc);
+		collisionDetected = DetectCollision(polyList[i]);
 		//DEBUG
-		if(collisionDetected != -1) {
-			polyList[i].collisionCnt++;
+		/*if(collisionDetected != -1) {
+			//polyList[i].collisionCnt++; //Now redundant
 			cout << "collision count for: " << i <<" is: "<< polyList[i].collisionCnt << endl;
 
-		}
+		}*/
 
 	glutSwapBuffers();
 	glFlush();
