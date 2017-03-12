@@ -11,6 +11,8 @@
 #include <ctime>			// Header File For Accessing System Time
 #include <atltime.h>        // Header File For Processing Time Intervals
 #include <cstring>          // Header File For Accessing String Type
+#include <sys/types.h>
+#include <fstream>
 #include <iostream>			// Header File for debug print messages
 using namespace std;
 
@@ -34,10 +36,10 @@ const int   NBR_STAR_TIPS = 5;                     // # points per star.        
 const int   MAX_STATE_INDEX = 5;                     // Maximum state index for stars.   //
 const float STAR_RADIUS = 0.075f;                 // Normal radius of star.           //
 const float STAR_COLOR[NBR_STARS][3] = { { 0.9f, 0.4f, 0.4f },   // Red
-{ 0.9f, 0.7f, 0.4f },   // Orange
+{ 0.9f, 0.7f, 0.4f },    // Orange
 { 0.9f, 0.9f, 0.4f },   // Yellow
 { 0.4f, 0.9f, 0.4f },   // Green
-{ 0.4f, 0.9f, 0.9f },   // Cyan
+{ 0.4f, 0.9f, 0.9f },    // Cyan
 { 0.9f, 0.4f, 0.9f },   // Magenta
 { 0.9f, 0.9f, 0.9f },   // White
 { 0.4f, 0.4f, 0.9f },   // Blue
@@ -90,7 +92,8 @@ public:
 	CTime freezeTime;     // Snapshot of time when star was frozen.            //
 
 	//NEW
-	int collisionCnt;	// Number of times star has collided. I can't spell :( //
+	int starNbr;		// Star number //
+	int collisionCnt;	// Number of times star has collided. //
 
 						  /* Default constructor. */
 	Star::Star()
@@ -191,6 +194,7 @@ void main(int argc, char **argv)
 		for (int j = 0; j < 3; j++)
 			newStar.color[j] = STAR_COLOR[i][j];
 		polyList[i] = newStar;
+		polyList[i].starNbr = i; // assign star number
 	}
 
 	/* Specify the resizing, displaying, and interactive routines. */
@@ -248,32 +252,53 @@ int FindMouseHit(GLfloat mouseX, GLfloat mouseY)
 /* Detect if two stars collide */ //WORKS!!!
 //try passing current star
 int DetectCollision(Star &currentStar) {
-	for (int i = 0; i < NBR_STARS; i++)
-	{
-		// Rather than determining whether the collision occured precisely within the
-		// star's boundaries, this function merely checks whether the colision is within
-		// 90% of the distance between the star's center and any of its tip vertices.
-		if (sqrt(pow(currentStar.x - polyList[i].x, 2) + pow(currentStar.y - polyList[i].y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) {
-			//increnent collison for star colliding
-			if (currentStar.collisionCnt < COLLISION_LIMIT) { // make sure collision limit per star is not exceeded
-				currentStar.collisionCnt++;
+	//debug
+	int colcnt = 0;
+
+	ofstream collisionFile;
+	collisionFile.open("collisionFile.txt", std::ios_base::app);
+	if (collisionFile.is_open()) {
+		for (int i = 0; i < NBR_STARS; i++)
+		{
+			// Rather than determining whether the collision occured precisely within the
+			// star's boundaries, this function merely checks whether the colision is within
+			// 90% of the distance between the star's center and any of its tip vertices.
+			//cout << sqrt(pow(currentStar.x - polyList[i].x, 2) + pow(currentStar.y - polyList[i].y, 2)) << " : " << 0.9 * polyList[i].pulsation * STAR_RADIUS << endl;
+			if (currentStar.starNbr != polyList[i].starNbr && sqrt(pow(currentStar.x - polyList[i].x, 2) + pow(currentStar.y - polyList[i].y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) { //we cannot have a star collide with itself duh.
+				//if (sqrt(pow(polyList[i].x - currentStar.x, 2) + pow(polyList[i].y - currentStar.y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) {
+					/*//increnent collison for star colliding
+					if (currentStar.collisionCnt < COLLISION_LIMIT) { // make sure collision limit per star is not exceeded
+						++currentStar.collisionCnt;
+					}
+					//increment collision counter for star collided against
+					if (polyList[i].collisionCnt < COLLISION_LIMIT) {
+						++polyList[i].collisionCnt;
+					}
+
+					//5 collisions set values
+					if (polyList[i].collisionCnt == 5) {
+						polyList[i].color[3] = 0.9f, 0.9f, 0.4f;
+					}*/
+					//swap inverse trajectories on collision
+				currentStar.xInc = polyList[i].xInc * -1;
+				currentStar.yInc = polyList[i].yInc * -1;
+				currentStar.collisionCnt = currentStar.collisionCnt + 1; //necessary?
+				polyList[i].xInc = currentStar.xInc * -1;
+				polyList[i].yInc = currentStar.yInc * -1;
+				polyList[i].collisionCnt = polyList[i].collisionCnt + 1;
+				//DEBUG
+				collisionFile << "Collision Detected: " << i << " collisions: " << currentStar.collisionCnt << endl;
+				colcnt++;
+				collisionFile << "collision: " << colcnt << endl;
+				collisionFile << "hit" << endl;
+				return i;
 			}
-			//increment collision counter for star collided against
-			if (polyList[i].collisionCnt < COLLISION_LIMIT) {
-				polyList[i].collisionCnt++;
-			}
-			//swap inverse trajectories on collision
-			currentStar.xInc = polyList[i].xInc * -1;
-			currentStar.yInc = polyList[i].yInc * -1;
-			polyList[i].xInc = currentStar.xInc * -1; 
-			polyList[i].yInc = currentStar.yInc * -1;
-			//DEBUG
-			cout << "Collision Detected: " << i << " collisions: " << polyList[i].collisionCnt << endl;
-			return i;
+			collisionFile << "miss" << endl;
+			return -1;
 		}
-			
+		collisionFile << "miss2" << endl;
+		return -1;
 	}
-	return -1;
 }
 
 /* Function to update each polygon's position, using "wraparound" */
@@ -407,31 +432,44 @@ void UpdateTitleBar()
 /* buffer and draws the stars within the window. */
 void Display()
 {
-	int i;
+	ofstream DisplayFile;
+	DisplayFile.open("displayFile.txt", std::ios_base::app);
+	if (DisplayFile.is_open()) {
+		int i;
 
-	if (gameOver == false) {  // check if game has ended / collision threshold has been met
-		glClear(GL_COLOR_BUFFER_BIT); // prevents trippy end effect. Do not call when all stars finish colliding. 
-	}
+		if (gameOver == false) {  // check if game has ended / collision threshold has been met
+			glClear(GL_COLOR_BUFFER_BIT); // prevents trippy end effect. Do not call when all stars finish colliding. 
+		}
 
-	glLineWidth(2);
+		glLineWidth(2);
 
-	// Display each polygon, applying its spin as needed. //
-	for (i = 0; i < NBR_STARS; i++)
-		polyList[i].draw();
+		// Display each polygon, applying its spin as needed. //
+		for (i = 0; i < NBR_STARS; i++)
+			polyList[i].draw();
 
-	// call to collision detection fctn here?
-	int collisionDetected;
-	for (i = 0; i < NBR_STARS; i++)
-		collisionDetected = DetectCollision(polyList[i]);
+		// call to collision detection fctn here?
+		int collisionDetected;
+		for (i = 0; i < NBR_STARS; i++) {
+			collisionDetected = DetectCollision(polyList[i]);
+			DisplayFile << "display: " << i << " return: " << collisionDetected << endl;
+			//DEBUG
+			/*if(collisionDetected != -1) {
+				//polyList[i].collisionCnt;
+				cout << "collision count for: " << i <<" is: "<< polyList[i].collisionCnt << endl;
+
+			}*/
+		}
 		//DEBUG
-		/*if(collisionDetected != -1) {
-			//polyList[i].collisionCnt++; //Now redundant
-			cout << "collision count for: " << i <<" is: "<< polyList[i].collisionCnt << endl;
-
+		/*while (gameOver != true) {
+			for (i = 0; i < NBR_STARS; i++)
+				cout << "star " << i << " : " << polyList[0].collisionCnt << endl;
 		}*/
 
-	glutSwapBuffers();
-	glFlush();
+
+
+		glutSwapBuffers();
+		glFlush();
+	}
 }
 
 /* Window-reshaping routine, to scale the rendered scene according */
