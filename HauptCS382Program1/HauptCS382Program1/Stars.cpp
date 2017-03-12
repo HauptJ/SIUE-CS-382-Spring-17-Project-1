@@ -191,9 +191,17 @@ void main(int argc, char **argv)
 	for (int i = 0; i < NBR_STARS; i++)
 	{
 		Star newStar;
-		for (int j = 0; j < 3; j++)
-			newStar.color[j] = STAR_COLOR[i][j];
+		newStar.color[0] = 0.4f; //
+		newStar.color[1] = 0.9f; //  initialize star color as cyan
+		newStar.color[2] = 0.9f; //
+		//newStar.color[3] = 0.4f, 0.9f, 0.9f; // assign cyan as starting color for each star
+		/*for (int j = 0; j < 3; j++) {
+			//newStar.color[j] = STAR_COLOR[i][j];
+			newStar.color[j] = 0.4f, 0.9f, 0.9f;
+		}*/
+		//polyList[i].color[3] = 0.4f, 0.9f, 0.9f; // assign cyan as starting color for each star
 		polyList[i] = newStar;
+		//polyList[i].color[3] = 0.4f, 0.9f, 0.9f;
 		polyList[i].starNbr = i; // assign star number
 	}
 

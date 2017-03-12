@@ -1,4 +1,4 @@
 ﻿  Stars.cpp
-c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(302): warning C4715: 'DetectCollision': not all control paths return a value
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(310): warning C4715: 'DetectCollision': not all control paths return a value
   HauptCS382Program1.vcxproj -> C:\Users\Josh\Documents\Dev\CS382\HauptCS382Program1\Debug\HauptCS382Program1.exe
   HauptCS382Program1.vcxproj -> C:\Users\Josh\Documents\Dev\CS382\HauptCS382Program1\Debug\HauptCS382Program1.pdb (Full PDB)
