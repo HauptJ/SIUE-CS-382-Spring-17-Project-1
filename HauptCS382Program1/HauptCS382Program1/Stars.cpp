@@ -56,6 +56,8 @@ const float PULSATION_INC = 0.03f;                  // Star pulsation rate.     
 //NEW
 const int COLLISION_LIMIT = 5;					// Max possible collions for a star. //
 
+int TOTAL_COLLISIONS = 0;						// Counter for total number of collisions. Used to determine if game is over //
+
 
 													/////////////////////////////////////////////////////
 													// 2D star-shaped polygon class (for convenience). //
@@ -194,14 +196,8 @@ void main(int argc, char **argv)
 		newStar.color[0] = 0.4f; //
 		newStar.color[1] = 0.9f; //  initialize star color as cyan
 		newStar.color[2] = 0.9f; //
-		//newStar.color[3] = 0.4f, 0.9f, 0.9f; // assign cyan as starting color for each star
-		/*for (int j = 0; j < 3; j++) {
-			//newStar.color[j] = STAR_COLOR[i][j];
-			newStar.color[j] = 0.4f, 0.9f, 0.9f;
-		}*/
-		//polyList[i].color[3] = 0.4f, 0.9f, 0.9f; // assign cyan as starting color for each star
+
 		polyList[i] = newStar;
-		//polyList[i].color[3] = 0.4f, 0.9f, 0.9f;
 		polyList[i].starNbr = i; // assign star number
 	}
 
@@ -273,32 +269,30 @@ int DetectCollision(Star &currentStar) {
 			// 90% of the distance between the star's center and any of its tip vertices.
 			//cout << sqrt(pow(currentStar.x - polyList[i].x, 2) + pow(currentStar.y - polyList[i].y, 2)) << " : " << 0.9 * polyList[i].pulsation * STAR_RADIUS << endl;
 			if (currentStar.starNbr != polyList[i].starNbr && sqrt(pow(currentStar.x - polyList[i].x, 2) + pow(currentStar.y - polyList[i].y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) { //we cannot have a star collide with itself duh.
-				//if (sqrt(pow(polyList[i].x - currentStar.x, 2) + pow(polyList[i].y - currentStar.y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) {
-					/*//increnent collison for star colliding
-					if (currentStar.collisionCnt < COLLISION_LIMIT) { // make sure collision limit per star is not exceeded
-						++currentStar.collisionCnt;
-					}
-					//increment collision counter for star collided against
-					if (polyList[i].collisionCnt < COLLISION_LIMIT) {
-						++polyList[i].collisionCnt;
-					}
-
-					//5 collisions set values
-					if (polyList[i].collisionCnt == 5) {
-						polyList[i].color[3] = 0.9f, 0.9f, 0.4f;
-					}*/
-					//swap inverse trajectories on collision
+				
+				//swap inverse trajectories on collision
 				currentStar.xInc = polyList[i].xInc * -1;
 				currentStar.yInc = polyList[i].yInc * -1;
-				currentStar.collisionCnt = currentStar.collisionCnt + 1; //necessary?
+				if (currentStar.collisionCnt < COLLISION_LIMIT) { // make sure collision limit is not exceeded
+					currentStar.collisionCnt = currentStar.collisionCnt + 1; //necessary?
+				}
 				polyList[i].xInc = currentStar.xInc * -1;
 				polyList[i].yInc = currentStar.yInc * -1;
-				polyList[i].collisionCnt = polyList[i].collisionCnt + 1;
+				if (polyList[i].collisionCnt < COLLISION_LIMIT) { // make sure collision limit is not exceeded
+					polyList[i].collisionCnt = polyList[i].collisionCnt + 1;
+				}
 				//DEBUG
 				collisionFile << "Collision Detected: " << i << " collisions: " << currentStar.collisionCnt << endl;
 				colcnt++;
 				collisionFile << "collision: " << colcnt << endl;
 				collisionFile << "hit" << endl;
+				//increment total collisions and check if total collision limit is reached. If it is, end game.
+				//total collision limit = NBR_STARS * COLLISION_LIMIT
+				TOTAL_COLLISIONS = TOTAL_COLLISIONS + 1;
+				if (TOTAL_COLLISIONS >= NBR_STARS * (COLLISION_LIMIT)) {
+					gameOver = true;
+				}
+
 				return i;
 			}
 			collisionFile << "miss" << endl;
@@ -472,7 +466,7 @@ void Display()
 			for (i = 0; i < NBR_STARS; i++)
 				cout << "star " << i << " : " << polyList[0].collisionCnt << endl;
 		}*/
-
+		
 
 
 		glutSwapBuffers();
