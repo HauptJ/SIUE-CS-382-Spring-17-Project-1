@@ -48,15 +48,16 @@ const float STAR_COLOR[NBR_STARS][3] = { { 0.9f, 0.4f, 0.4f },   // Red
 { 0.9f, 0.0f, 0.6f },   // Violet
 { 0.6f, 0.6f, 0.0f } }; // Brown
 const float PULSATION_FACTOR = 2.5f;                   // Extent of pulsation enlargement. //
-const int   FREEZE_INTERVAL = 6;                      // Freeze interval (in seconds).    //
+const int   FREEZE_INTERVAL = 6;                      // INITIAL Freeze interval (in seconds).    //
 const float STAR_SPEED = 0.015f;                 // Star velocity.                   //
 const float STAR_SPIN_INC = 0.3f;                   // Star rotation rate.              //
 const float PULSATION_INC = 0.03f;                  // Star pulsation rate.             //
 
 //NEW
-const int COLLISION_LIMIT = 5;					// Max possible collions for a star. //
+const int COLLISION_LIMIT = 6;					// Max possible collions for a star. //
 
 int TOTAL_COLLISIONS = 0;						// Counter for total number of collisions. Used to determine if game is over //
+int YELLOW_STARS = 0;							// Counter for total number of yellow stars. //
 
 
 													/////////////////////////////////////////////////////
@@ -127,6 +128,11 @@ public:
 
 		// Initialize collision count
 		collisionCnt = 0;
+
+		// Initialize color cyan
+		color[0] = 0.4f; //
+		color[1] = 0.9f; //  initialize star color as cyan
+		color[2] = 0.9f; //
 	}
 
 	/* Render the star-shaped polygon. */
@@ -166,6 +172,9 @@ void UpdateTitleBar();
 //int DetectCollision(GLfloat posX, GLfloat posY);
 int DetectCollision(Star &currentStar);
 
+// Collision effects
+void CollisionEffects(Star &currentStar);
+
 //////////////////////
 // Global Variables //
 //////////////////////
@@ -193,9 +202,9 @@ void main(int argc, char **argv)
 	for (int i = 0; i < NBR_STARS; i++)
 	{
 		Star newStar;
-		newStar.color[0] = 0.4f; //
+		/*newStar.color[0] = 0.4f; //
 		newStar.color[1] = 0.9f; //  initialize star color as cyan
-		newStar.color[2] = 0.9f; //
+		newStar.color[2] = 0.9f; // */
 
 		polyList[i] = newStar;
 		polyList[i].starNbr = i; // assign star number
@@ -214,27 +223,31 @@ void main(int argc, char **argv)
 /* boundaries and, if so, by freezing (or unfreezing)that star.     */
 void MouseClick(int mouseButton, int mouseState, int mouseXPosition, int mouseYPosition)
 {
-	Star str;
-	GLfloat x = windowWidth * mouseXPosition / currWindowSize[0] - 0.5f * windowWidth;
-	GLfloat y = 0.5f * windowHeight - (windowHeight * mouseYPosition / currWindowSize[1]);
-	int index = FindMouseHit(x, y);
-	if ((mouseState == GLUT_DOWN) && (index >= 0))
-	{
-		if (polyList[index].freezeLimit == 0)
+	ofstream mouseClickFile; 
+	mouseClickFile.open("mouseClickFile.txt", std::ios_base::app);
+	if (mouseClickFile.is_open()) {
+		Star str;
+		GLfloat x = windowWidth * mouseXPosition / currWindowSize[0] - 0.5f * windowWidth;
+		GLfloat y = 0.5f * windowHeight - (windowHeight * mouseYPosition / currWindowSize[1]);
+		int index = FindMouseHit(x, y);
+		if ((mouseState == GLUT_DOWN) && (index >= 0))
 		{
-			Beep(FREEZE_BEEP_FREQUENCY, FREEZE_BEEP_DURATION);
-			polyList[index].freezeTime = CTime::GetCurrentTime();
-			polyList[index].freezeLimit = FREEZE_INTERVAL;
-		}
-		else
-		{
-			Beep(UNFREEZE_BEEP_FREQUENCY, UNFREEZE_BEEP_DURATION);
-			polyList[index].freezeLimit = 0;
+			if (polyList[index].freezeLimit == 0)
+			{
+				Beep(FREEZE_BEEP_FREQUENCY, FREEZE_BEEP_DURATION);
+				polyList[index].freezeTime = CTime::GetCurrentTime();
+				polyList[index].freezeLimit = (FREEZE_INTERVAL - polyList[index].collisionCnt); //Freeze time = Initial freeze limit - collision count
+				mouseClickFile << "star: " << index << "freezeLimit: " << polyList[index].freezeLimit << endl;
+			}
+			else
+			{
+				Beep(UNFREEZE_BEEP_FREQUENCY, UNFREEZE_BEEP_DURATION);
+				polyList[index].freezeLimit = 0;
+			}
 		}
 	}
 }
 
-// Can this be used to track collisions between stars? //
 
 /* Function to traverse the star list until the current star contains the */
 /* current mouse position, whereupon that star's index is returned. If no */
@@ -273,26 +286,32 @@ int DetectCollision(Star &currentStar) {
 				//swap inverse trajectories on collision
 				currentStar.xInc = polyList[i].xInc * -1;
 				currentStar.yInc = polyList[i].yInc * -1;
+				currentStar.collisionCnt = currentStar.collisionCnt + 1;
+				
 				if (currentStar.collisionCnt < COLLISION_LIMIT) { // make sure collision limit is not exceeded
-					currentStar.collisionCnt = currentStar.collisionCnt + 1; //necessary?
+					currentStar.collisionCnt = currentStar.collisionCnt + 1;
+					//CollisionEffects(currentStar);
 				}
+				CollisionEffects(currentStar);
+
 				polyList[i].xInc = currentStar.xInc * -1;
 				polyList[i].yInc = currentStar.yInc * -1;
+				polyList[i].collisionCnt = polyList[i].collisionCnt + 1;
 				if (polyList[i].collisionCnt < COLLISION_LIMIT) { // make sure collision limit is not exceeded
 					polyList[i].collisionCnt = polyList[i].collisionCnt + 1;
+					//CollisionEffects(polyList[i]);
 				}
+				CollisionEffects(polyList[i]);
+				
 				//DEBUG
 				collisionFile << "Collision Detected: " << i << " collisions: " << currentStar.collisionCnt << endl;
 				colcnt++;
 				collisionFile << "collision: " << colcnt << endl;
+				collisionFile << "Total collisions: " << TOTAL_COLLISIONS << endl;
 				collisionFile << "hit" << endl;
 				//increment total collisions and check if total collision limit is reached. If it is, end game.
 				//total collision limit = NBR_STARS * COLLISION_LIMIT
-				TOTAL_COLLISIONS = TOTAL_COLLISIONS + 1;
-				if (TOTAL_COLLISIONS >= NBR_STARS * (COLLISION_LIMIT)) {
-					gameOver = true;
-				}
-
+				TOTAL_COLLISIONS = TOTAL_COLLISIONS + 2;
 				return i;
 			}
 			collisionFile << "miss" << endl;
@@ -301,6 +320,63 @@ int DetectCollision(Star &currentStar) {
 		collisionFile << "miss2" << endl;
 		return -1;
 	}
+	collisionFile << "miss3" << endl;
+	return -1;
+}
+
+// Collision effects
+
+void CollisionEffects(Star &currentStar) {
+	
+	// 1 collision
+	if (currentStar.collisionCnt == 1) { 
+		currentStar.color[0] = 0.4f; //
+		currentStar.color[1] = 0.4f; // set color to blue
+		currentStar.color[2] = 0.9f; //
+
+	} 
+
+	// 2 collisions
+	if (currentStar.collisionCnt == 2) {
+		currentStar.color[0] = 0.9f; //
+		currentStar.color[1] = 0.0f; // set color to violet
+		currentStar.color[2] = 0.6f; //
+
+	}
+
+	// 3 collisions
+	if (currentStar.collisionCnt == 3) {
+		currentStar.color[0] = 0.9f; //
+		currentStar.color[1] = 0.4f; // set color to red
+		currentStar.color[2] = 0.4f; //
+
+	}
+
+	// 4 collisions
+	if (currentStar.collisionCnt == 4) {
+		currentStar.color[0] = 0.9f; //
+		currentStar.color[1] = 0.7f; // set color to orange
+		currentStar.color[2] = 0.4f; //
+
+	}
+
+	// 5 collisions
+	if (currentStar.collisionCnt >= 5) {
+		currentStar.color[0] = 0.9f; //
+		currentStar.color[1] = 0.9f; // set color to yellow
+		currentStar.color[2] = 0.4f; //
+		
+		if (currentStar.collisionCnt == 5) { // increment number of yellow stars
+			YELLOW_STARS = YELLOW_STARS + 1;
+		}
+
+		// end game if all stars are yellow
+		if (YELLOW_STARS == NBR_STARS) {
+			gameOver = true;
+		}
+	}
+
+
 }
 
 /* Function to update each polygon's position, using "wraparound" */
@@ -403,12 +479,12 @@ void UpdateTitleBar()
 {
 	char label[100] = "PULSATING STARS: ";
 	int frozenCount = 0;
-	int collisions = 0; // total number of collitions
+	//int collisions = 0; // total number of collitions
 	for (int i = 0; i < NBR_STARS; i++) {
 		if (polyList[i].freezeLimit > 0)
 			frozenCount++;
-		if (polyList[i].collisionCnt > 0) // will not work
-			collisions++;
+		/*if (polyList[i].collisionCnt > 0) // will not work
+			collisions++;*/
 	}
 	
 	char frozenLabel[5] = "";
@@ -422,10 +498,10 @@ void UpdateTitleBar()
 	strcat_s(label, 100, " UNFROZEN STARS ");
 
 	// Collisions
-	char collisionLabel[5] = "";
-	ConvertToCharacterArray(collisions, collisionLabel);
+	/*char collisionLabel[5] = "";
+	ConvertToCharacterArray(TOTAL_COLLISIONS, collisionLabel);
 	strcat_s(label, 100, collisionLabel);
-	strcat_s(label, 100, " Collisions");
+	strcat_s(label, 100, " Collisions");*/
 
 	glutSetWindowTitle(label);
 }
@@ -466,7 +542,58 @@ void Display()
 			for (i = 0; i < NBR_STARS; i++)
 				cout << "star " << i << " : " << polyList[0].collisionCnt << endl;
 		}*/
+
+		// Help game along if we get stuck
+		if (TOTAL_COLLISIONS >= 100) { //end game if it goes on too long
+			for (i = 0; i < NBR_STARS; i++) {
+				if (polyList[i].collisionCnt <= 1) {
+					polyList[i].collisionCnt = 1;
+					CollisionEffects(polyList[i]);
+				}
+
+			}
+		}
+
+		if (TOTAL_COLLISIONS >= 150) { //end game if it goes on too long
+			for (i = 0; i < NBR_STARS; i++) {
+				if (polyList[i].collisionCnt <= 2) {
+					polyList[i].collisionCnt = 2;
+					CollisionEffects(polyList[i]);
+				}
+
+			}
+		}
 		
+		// Help game along if we get stuck
+		if (TOTAL_COLLISIONS >= 200) { //end game if it goes on too long
+			for (i = 0; i < NBR_STARS; i++) {
+				if (polyList[i].collisionCnt <= 3) {
+					polyList[i].collisionCnt = 3;
+					CollisionEffects(polyList[i]);
+				}
+				
+			}
+		}
+
+		if (TOTAL_COLLISIONS >= 250) { //end game if it goes on too long
+			for (i = 0; i < NBR_STARS; i++) {
+				if (polyList[i].collisionCnt <= 4) {
+					polyList[i].collisionCnt = 4;
+					CollisionEffects(polyList[i]);
+				}
+
+			}
+		}
+
+		if (TOTAL_COLLISIONS >= 300) { //end game if it goes on too long
+			for (i = 0; i < NBR_STARS; i++) {
+				if (polyList[i].collisionCnt <= 5) {
+					polyList[i].collisionCnt = 5;
+					CollisionEffects(polyList[i]);
+				}
+
+			}
+		}
 
 
 		glutSwapBuffers();
