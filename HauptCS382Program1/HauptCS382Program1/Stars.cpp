@@ -97,6 +97,8 @@ public:
 	//NEW
 	int starNbr;		// Star number //
 	int collisionCnt;	// Number of times star has collided. //
+	float speed;		// Star speed
+	float radius;		// Star radius
 
 						  /* Default constructor. */
 	Star::Star()
@@ -106,8 +108,10 @@ public:
 		y = GenerateRandomNumber(-1.0f + STAR_RADIUS, 1.0f - STAR_RADIUS);
 
 		// Randomly generated velocity. //
-		xInc = GenerateRandomNumber(STAR_SPEED / 4.0, STAR_SPEED);
-		yInc = sqrt(STAR_SPEED * STAR_SPEED - xInc * xInc);
+		//speed = STAR_SPEED; // default speed
+		speed = GenerateRandomNumber(0.010f, 0.045f); // random speed
+		xInc = GenerateRandomNumber(speed / 4.0, speed);
+		yInc = sqrt(speed * speed - xInc * xInc);
 		float randNbr = GenerateRandomNumber(-1.0, 1.0);
 		if (randNbr < 0.0f)
 			xInc *= -1.0f;
@@ -117,11 +121,20 @@ public:
 
 		// Initial orientation: zero. //
 		spin = 0.0f;
-		spinInc = STAR_SPIN_INC;
+		//spinInc = STAR_SPIN_INC;
+		spinInc = GenerateRandomNumber(0.15f, 0.55f);
+
 
 		// Initial pulsation status: 100%. //
+		/*
 		pulsation = 1.0f;
 		pulsationInc = PULSATION_INC;
+		*/
+		pulsation = 1.0f;
+		//pulsationInc = 0.15f;
+		pulsationInc = GenerateRandomNumber(0.02f, 0.045f); // unique pulsation rate for each star
+		//pulsationInc = 0.0f; // disable pulsation
+		//pulsationInc = PULSATION_INC; // default
 
 		// Star initialized in unfrozen state. //
 		freezeLimit = 0;
@@ -202,9 +215,6 @@ void main(int argc, char **argv)
 	for (int i = 0; i < NBR_STARS; i++)
 	{
 		Star newStar;
-		/*newStar.color[0] = 0.4f; //
-		newStar.color[1] = 0.9f; //  initialize star color as cyan
-		newStar.color[2] = 0.9f; // */
 
 		polyList[i] = newStar;
 		polyList[i].starNbr = i; // assign star number
@@ -333,6 +343,7 @@ void CollisionEffects(Star &currentStar) {
 		currentStar.color[0] = 0.4f; //
 		currentStar.color[1] = 0.4f; // set color to blue
 		currentStar.color[2] = 0.9f; //
+		currentStar.pulsation
 
 	} 
 
