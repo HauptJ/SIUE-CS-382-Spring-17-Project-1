@@ -31,6 +31,9 @@ const int   FREEZE_BEEP_FREQUENCY = 1000;                  // Freezing beep audi
 const int   UNFREEZE_BEEP_DURATION = 25;                    // # msec per beep for unfreezing.  //
 const int   UNFREEZE_BEEP_FREQUENCY = 400;                   // Unfreezing beep audio frequency. //
 
+const int   COLLISION_BEEP_DURATION = 25;                    // # msec per beep for collision.  //
+const int   COLLISION_BEEP_FREQUENCY = 400;                   // collision beep audio frequency. //
+
 const int   NBR_STARS = 12;                    // # stars in game.                 //
 const int   NBR_STAR_TIPS = 5;                     // # points per star.               //
 const int   MAX_STATE_INDEX = 5;                     // Maximum state index for stars.   //
@@ -318,6 +321,9 @@ int DetectCollision(Star &currentStar) {
 					//CollisionEffects(polyList[i]);
 				}
 				CollisionEffects(polyList[i]);
+
+				// LET THERE BE BEEPING!!!!
+				Beep((COLLISION_BEEP_FREQUENCY * (currentStar.collisionCnt + polyList[i].collisionCnt)), COLLISION_BEEP_DURATION);
 				
 				//DEBUG
 				collisionFile << "Collision Detected: " << i << " collisions: " << currentStar.collisionCnt << endl;
@@ -511,7 +517,7 @@ void AdjustToWindow(Star &currentStar)
 void UpdateTitleBar()
 {
 	//TIMER
-	/*while (gameOver == false) {
+	/*if (gameOver == false) {
 		GAME_TIMER = CTime::GetCurrentTime() - startTime;
 		GAME_SECONDS = (int)GAME_TIMER.GetTotalSeconds();
 	}*/
@@ -588,7 +594,8 @@ void Display()
 		}
 
 		// Help game along if we get stuck
-		if (TOTAL_COLLISIONS >= 250) { //end game if it goes on too long
+		// Make sure all stars have at least 1 collision after 60 sec
+		if (TOTAL_COLLISIONS >= 250 || GAME_SECONDS == 60) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 1) {
 					polyList[i].collisionCnt = 1;
@@ -598,7 +605,8 @@ void Display()
 			}
 		}
 
-		if (TOTAL_COLLISIONS >= 450) { //end game if it goes on too long
+		// Make sure all stars have at least 2 collision after 90 sec
+		if (TOTAL_COLLISIONS >= 450 || GAME_SECONDS == 90) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 2) {
 					polyList[i].collisionCnt = 2;
@@ -608,8 +616,8 @@ void Display()
 			}
 		}
 		
-		// Help game along if we get stuck
-		if (TOTAL_COLLISIONS >= 650) { //end game if it goes on too long
+		// Make sure all stars have at least 3 collision after 120 sec
+		if (TOTAL_COLLISIONS >= 650 || GAME_SECONDS == 120) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 3) {
 					polyList[i].collisionCnt = 3;
@@ -619,7 +627,8 @@ void Display()
 			}
 		}
 
-		if (TOTAL_COLLISIONS >= 750) { //end game if it goes on too long
+		// Make sure all stars have at least 4 collision after 150 sec
+		if (TOTAL_COLLISIONS >= 750 || GAME_SECONDS == 150) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 4) {
 					polyList[i].collisionCnt = 4;
@@ -629,7 +638,8 @@ void Display()
 			}
 		}
 
-		if (TOTAL_COLLISIONS >= 850) { //end game if it goes on too long
+		// Make sure all stars have at least 5 collision after 180 sec
+		if (TOTAL_COLLISIONS >= 850 || GAME_SECONDS == 180) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 5) {
 					polyList[i].collisionCnt = 5;
