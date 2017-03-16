@@ -1,3 +1,11 @@
+/*
+Joshua Haupt
+CS 382 Program 1 Spring 2016
+16 March 2017
+*/
+
+
+
 /***********************************************************************/
 /* Filename: Stars_Prekiminary.cpp                                     */
 /* Generates a dozen pulsating star-shaped polygons that float in a 2D */
@@ -62,6 +70,8 @@ const int COLLISION_LIMIT = 6;					// Max possible collions for a star. //
 
 int TOTAL_COLLISIONS = 0;						// Counter for total number of collisions. Used to determine if game is over //
 int YELLOW_STARS = 0;							// Counter for total number of yellow stars. //
+
+int CallInc;
 
 
 													/////////////////////////////////////////////////////
@@ -226,9 +236,6 @@ void main(int argc, char **argv)
 		polyList[i].starNbr = i; // assign star number
 	}
 
-	//Start game time clock
-	//startTime = CTime::GetCurrentTime();
-
 	/* Specify the resizing, displaying, and interactive routines. */
 	glutReshapeFunc(ResizeWindow);
 	glutDisplayFunc(Display);
@@ -299,7 +306,6 @@ int DetectCollision(Star &currentStar) {
 			// Rather than determining whether the collision occured precisely within the
 			// star's boundaries, this function merely checks whether the colision is within
 			// 90% of the distance between the star's center and any of its tip vertices.
-			//cout << sqrt(pow(currentStar.x - polyList[i].x, 2) + pow(currentStar.y - polyList[i].y, 2)) << " : " << 0.9 * polyList[i].pulsation * STAR_RADIUS << endl;
 			if (currentStar.starNbr != polyList[i].starNbr && sqrt(pow(currentStar.x - polyList[i].x, 2) + pow(currentStar.y - polyList[i].y, 2)) < 0.9 * polyList[i].pulsation * STAR_RADIUS) { //we cannot have a star collide with itself duh.
 				
 				//swap inverse trajectories on collision
@@ -309,18 +315,18 @@ int DetectCollision(Star &currentStar) {
 				
 				if (currentStar.collisionCnt < COLLISION_LIMIT) { // make sure collision limit is not exceeded
 					currentStar.collisionCnt = currentStar.collisionCnt + 1;
-					//CollisionEffects(currentStar);
+					CollisionEffects(currentStar);
 				}
-				CollisionEffects(currentStar);
+				//CollisionEffects(currentStar);
 
 				polyList[i].xInc = currentStar.xInc * -1;
 				polyList[i].yInc = currentStar.yInc * -1;
 				polyList[i].collisionCnt = polyList[i].collisionCnt + 1;
 				if (polyList[i].collisionCnt < COLLISION_LIMIT) { // make sure collision limit is not exceeded
 					polyList[i].collisionCnt = polyList[i].collisionCnt + 1;
-					//CollisionEffects(polyList[i]);
+					CollisionEffects(polyList[i]);
 				}
-				CollisionEffects(polyList[i]);
+				//CollisionEffects(polyList[i]);
 
 				// LET THERE BE BEEPING!!!!
 				Beep((COLLISION_BEEP_FREQUENCY * (currentStar.collisionCnt + polyList[i].collisionCnt)), COLLISION_BEEP_DURATION);
@@ -332,7 +338,6 @@ int DetectCollision(Star &currentStar) {
 				collisionFile << "Total collisions: " << TOTAL_COLLISIONS << endl;
 				collisionFile << "hit" << endl;
 				//increment total collisions and check if total collision limit is reached. If it is, end game.
-				//total collision limit = NBR_STARS * COLLISION_LIMIT
 				TOTAL_COLLISIONS = TOTAL_COLLISIONS + 2;
 				return i;
 			}
@@ -404,7 +409,6 @@ void CollisionEffects(Star &currentStar) {
 		currentStar.pulsationInc = (currentStar.pulsationInc * 0.5); // low pulsation
 		currentStar.spinInc = (currentStar.spinInc * 0.5);  // low spin
 		currentStar.radius = (currentStar.radius * 1.50); // very large radius
-		
 		
 			YELLOW_STARS = YELLOW_STARS + 1; // increment number of yellow stars
 		}
@@ -573,29 +577,17 @@ void Display()
 		for (i = 0; i < NBR_STARS; i++) {
 			collisionDetected = DetectCollision(polyList[i]);
 			DisplayFile << "display: " << i << " return: " << collisionDetected << endl;
-			//DEBUG
-			/*if(collisionDetected != -1) {
-				//polyList[i].collisionCnt;
-				cout << "collision count for: " << i <<" is: "<< polyList[i].collisionCnt << endl;
-
-			}*/
 		}
-		//DEBUG
-		/*while (gameOver != true) {
-			for (i = 0; i < NBR_STARS; i++)
-				cout << "star " << i << " : " << polyList[0].collisionCnt << endl;
-		}*/
 
 		// Update TIMER
 		if (gameOver == false) {
 			CTimeSpan gameTimer = CTime::GetCurrentTime() - startTime;
 			GAME_SECONDS = (int)gameTimer.GetTotalSeconds();
-			cout << GAME_SECONDS << endl;
 		}
 
 		// Help game along if we get stuck
 		// Make sure all stars have at least 1 collision after 60 sec
-		if (TOTAL_COLLISIONS >= 250 || GAME_SECONDS == 60) {
+		if (CallInc == 0 && (TOTAL_COLLISIONS >= 250 || GAME_SECONDS == 79)) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 1) {
 					polyList[i].collisionCnt = 1;
@@ -603,10 +595,11 @@ void Display()
 				}
 
 			}
+			CallInc = CallInc + 1;
 		}
 
 		// Make sure all stars have at least 2 collision after 90 sec
-		if (TOTAL_COLLISIONS >= 450 || GAME_SECONDS == 90) {
+		if (CallInc == 1 && (TOTAL_COLLISIONS >= 450 || GAME_SECONDS == 142)) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 2) {
 					polyList[i].collisionCnt = 2;
@@ -614,10 +607,11 @@ void Display()
 				}
 
 			}
+			CallInc = CallInc + 1;
 		}
 		
 		// Make sure all stars have at least 3 collision after 120 sec
-		if (TOTAL_COLLISIONS >= 650 || GAME_SECONDS == 120) {
+		if (CallInc == 2 && (TOTAL_COLLISIONS >= 650 || GAME_SECONDS == 215)) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 3) {
 					polyList[i].collisionCnt = 3;
@@ -625,10 +619,11 @@ void Display()
 				}
 				
 			}
+			CallInc = CallInc + 1;
 		}
 
 		// Make sure all stars have at least 4 collision after 150 sec
-		if (TOTAL_COLLISIONS >= 750 || GAME_SECONDS == 150) {
+		if (CallInc == 3 && (TOTAL_COLLISIONS >= 750 || GAME_SECONDS == 287)) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 4) {
 					polyList[i].collisionCnt = 4;
@@ -636,10 +631,11 @@ void Display()
 				}
 
 			}
+			CallInc = CallInc + 1;
 		}
 
 		// Make sure all stars have at least 5 collision after 180 sec
-		if (TOTAL_COLLISIONS >= 850 || GAME_SECONDS == 180) {
+		if (CallInc == 4 && (TOTAL_COLLISIONS >= 850 || GAME_SECONDS == 358)) {
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 5) {
 					polyList[i].collisionCnt = 5;
@@ -647,6 +643,7 @@ void Display()
 				}
 
 			}
+			CallInc = CallInc + 1;
 		}
 
 
