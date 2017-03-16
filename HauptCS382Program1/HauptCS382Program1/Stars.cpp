@@ -34,7 +34,8 @@ const int   UNFREEZE_BEEP_FREQUENCY = 400;                   // Unfreezing beep 
 const int   NBR_STARS = 12;                    // # stars in game.                 //
 const int   NBR_STAR_TIPS = 5;                     // # points per star.               //
 const int   MAX_STATE_INDEX = 5;                     // Maximum state index for stars.   //
-const float STAR_RADIUS = 0.075f;                 // Normal radius of star.           //
+//const float STAR_RADIUS = 0.075f;                 // Normal radius of star.           //
+const float STAR_RADIUS = 0.055f;
 const float STAR_COLOR[NBR_STARS][3] = { { 0.9f, 0.4f, 0.4f },   // Red
 { 0.9f, 0.7f, 0.4f },    // Orange
 { 0.9f, 0.9f, 0.4f },   // Yellow
@@ -98,14 +99,15 @@ public:
 	int starNbr;		// Star number //
 	int collisionCnt;	// Number of times star has collided. //
 	float speed;		// Star speed
-	float radius;		// Star radius
+	float radius;		// Star radius each star stars off with same radius 
+	float collisionDelay; // Delay to prevent collisions counting mult times.
 
 						  /* Default constructor. */
 	Star::Star()
 	{
 		// Randomly generated initial position (inside window). //
-		x = GenerateRandomNumber(-1.0f + STAR_RADIUS, 1.0f - STAR_RADIUS);
-		y = GenerateRandomNumber(-1.0f + STAR_RADIUS, 1.0f - STAR_RADIUS);
+		x = GenerateRandomNumber(-1.0f + radius, 1.0f - radius);
+		y = GenerateRandomNumber(-1.0f + radius, 1.0f - radius);
 
 		// Randomly generated velocity. //
 		//speed = STAR_SPEED; // default speed
@@ -121,20 +123,11 @@ public:
 
 		// Initial orientation: zero. //
 		spin = 0.0f;
-		//spinInc = STAR_SPIN_INC;
+		//spinInc = STAR_SPIN_INC; // default
 		spinInc = GenerateRandomNumber(0.15f, 0.55f);
 
-
-		// Initial pulsation status: 100%. //
-		/*
 		pulsation = 1.0f;
-		pulsationInc = PULSATION_INC;
-		*/
-		pulsation = 1.0f;
-		//pulsationInc = 0.15f;
-		pulsationInc = GenerateRandomNumber(0.02f, 0.045f); // unique pulsation rate for each star
-		//pulsationInc = 0.0f; // disable pulsation
-		//pulsationInc = PULSATION_INC; // default
+		pulsationInc = GenerateRandomNumber(0.065f, 0.095f); // unique pulsation rate for each star
 
 		// Star initialized in unfrozen state. //
 		freezeLimit = 0;
@@ -146,6 +139,10 @@ public:
 		color[0] = 0.4f; //
 		color[1] = 0.9f; //  initialize star color as cyan
 		color[2] = 0.9f; //
+
+		radius = STAR_RADIUS;
+
+		collisionDelay = 0;
 	}
 
 	/* Render the star-shaped polygon. */
@@ -158,11 +155,11 @@ public:
 		{
 			theta = spin + 360 * j * PI_OVER_180 / (2 * NBR_STAR_TIPS);
 			if (j % 2 != 0)
-				glVertex2f(x + pulsation * 0.5f * STAR_RADIUS * cos(theta),
-					y + pulsation *  0.5f * STAR_RADIUS * sin(theta));
+				glVertex2f(x + pulsation * 0.5f * radius * cos(theta),
+					y + pulsation *  0.5f * radius * sin(theta));
 			else
-				glVertex2f(x + pulsation * STAR_RADIUS * cos(theta),
-					y + pulsation * STAR_RADIUS * sin(theta));
+				glVertex2f(x + pulsation * radius * cos(theta),
+					y + pulsation * radius * sin(theta));
 		}
 		glEnd();
 	}
@@ -195,7 +192,13 @@ GLint   currWindowSize[2] = { 1000, 750 };            // Window size in pixels. 
 GLfloat windowWidth = 4.0;                      // Resized window width.  //
 GLfloat windowHeight = 3.0;                      // Resized window height. //
 Star    polyList[NBR_STARS];                             // Current polygon list.  //
+
 CTime   startTime = CTime::GetCurrentTime();  // Game start time.       //
+
+// NEW
+CTime	endTime;
+CTimeSpan   GAME_TIMER;  // Game timer.       //
+int GAME_SECONDS; // Game time in seconds //
 
 bool gameOver = false;								// Global Bool to check if game has ended. It should be set to true when collision threshold is met.
 
@@ -219,6 +222,9 @@ void main(int argc, char **argv)
 		polyList[i] = newStar;
 		polyList[i].starNbr = i; // assign star number
 	}
+
+	//Start game time clock
+	//startTime = CTime::GetCurrentTime();
 
 	/* Specify the resizing, displaying, and interactive routines. */
 	glutReshapeFunc(ResizeWindow);
@@ -343,7 +349,9 @@ void CollisionEffects(Star &currentStar) {
 		currentStar.color[0] = 0.4f; //
 		currentStar.color[1] = 0.4f; // set color to blue
 		currentStar.color[2] = 0.9f; //
-		currentStar.pulsation
+		currentStar.pulsationInc = (currentStar.pulsationInc * 0.80);  // fast pulsation
+		currentStar.spinInc = (currentStar.spinInc * 0.80);  // fast spin
+		currentStar.radius = (currentStar.radius * 1.20); // medium small radius
 
 	} 
 
@@ -352,7 +360,9 @@ void CollisionEffects(Star &currentStar) {
 		currentStar.color[0] = 0.9f; //
 		currentStar.color[1] = 0.0f; // set color to violet
 		currentStar.color[2] = 0.6f; //
-
+		currentStar.pulsationInc = (currentStar.pulsationInc * 0.70); // medium fast pulsation
+		currentStar.spinInc = (currentStar.spinInc * 0.70);  // medium fast spin
+		currentStar.radius = (currentStar.radius * 1.15); // medium radius
 	}
 
 	// 3 collisions
@@ -360,6 +370,9 @@ void CollisionEffects(Star &currentStar) {
 		currentStar.color[0] = 0.9f; //
 		currentStar.color[1] = 0.4f; // set color to red
 		currentStar.color[2] = 0.4f; //
+		currentStar.pulsationInc = (currentStar.pulsationInc * 0.85); // medium pulsation
+		currentStar.spinInc = (currentStar.spinInc * 0.85);  // medium spin
+		currentStar.radius = (currentStar.radius * 1.20); // medium large radius
 
 	}
 
@@ -368,17 +381,26 @@ void CollisionEffects(Star &currentStar) {
 		currentStar.color[0] = 0.9f; //
 		currentStar.color[1] = 0.7f; // set color to orange
 		currentStar.color[2] = 0.4f; //
+		currentStar.pulsationInc = (currentStar.pulsationInc * 0.80); // medium - low pulsation
+		currentStar.spinInc = (currentStar.spinInc * 0.80);  // medium - low spin
+		currentStar.radius = (currentStar.radius * 1.15); // large radius
 
 	}
 
-	// 5 collisions
+	// 5 or more collisions
 	if (currentStar.collisionCnt >= 5) {
 		currentStar.color[0] = 0.9f; //
 		currentStar.color[1] = 0.9f; // set color to yellow
 		currentStar.color[2] = 0.4f; //
 		
-		if (currentStar.collisionCnt == 5) { // increment number of yellow stars
-			YELLOW_STARS = YELLOW_STARS + 1;
+		// 5 collisions
+		if (currentStar.collisionCnt == 5) { 
+		currentStar.pulsationInc = (currentStar.pulsationInc * 0.5); // low pulsation
+		currentStar.spinInc = (currentStar.spinInc * 0.5);  // low spin
+		currentStar.radius = (currentStar.radius * 1.50); // very large radius
+		
+		
+			YELLOW_STARS = YELLOW_STARS + 1; // increment number of yellow stars
 		}
 
 		// end game if all stars are yellow
@@ -449,8 +471,8 @@ void AdjustToWindow(Star &currentStar)
 	for (int j = 0; j < NBR_STAR_TIPS; j++)
 	{
 		theta = currentStar.spin + 360 * j * PI_OVER_180 / NBR_STAR_TIPS;
-		x = currentStar.x + currentStar.pulsation * STAR_RADIUS * cos(theta);
-		y = currentStar.y + currentStar.pulsation * STAR_RADIUS * sin(theta);
+		x = currentStar.x + currentStar.pulsation * currentStar.radius * cos(theta);
+		y = currentStar.y + currentStar.pulsation * currentStar.radius * sin(theta);
 		if (x > windowWidth / 2.0)
 			tooRight = true;
 		else if (x < -windowWidth / 2.0)
@@ -465,22 +487,22 @@ void AdjustToWindow(Star &currentStar)
 	if (tooRight)
 	{
 		currentStar.xInc *= -1.0f;
-		currentStar.x = windowWidth / 2.0f - STAR_RADIUS;
+		currentStar.x = windowWidth / 2.0f - currentStar.radius;
 	}
 	else if (tooLeft)
 	{
 		currentStar.xInc *= -1.0f;
-		currentStar.x = -windowWidth / 2.0f + STAR_RADIUS;
+		currentStar.x = -windowWidth / 2.0f + currentStar.radius;
 	}
 	if (tooHigh)
 	{
 		currentStar.yInc *= -1.0f;
-		currentStar.y = windowHeight / 2.0f - STAR_RADIUS;
+		currentStar.y = windowHeight / 2.0f - currentStar.radius;
 	}
 	else if (tooLow)
 	{
 		currentStar.yInc *= -1.0f;
-		currentStar.y = -windowHeight / 2.0f + STAR_RADIUS;
+		currentStar.y = -windowHeight / 2.0f + currentStar.radius;
 	}
 }
 
@@ -488,14 +510,18 @@ void AdjustToWindow(Star &currentStar)
 /* the number of frozen and unfrozen stars.            */
 void UpdateTitleBar()
 {
+	//TIMER
+	/*while (gameOver == false) {
+		GAME_TIMER = CTime::GetCurrentTime() - startTime;
+		GAME_SECONDS = (int)GAME_TIMER.GetTotalSeconds();
+	}*/
+
 	char label[100] = "PULSATING STARS: ";
 	int frozenCount = 0;
 	//int collisions = 0; // total number of collitions
 	for (int i = 0; i < NBR_STARS; i++) {
 		if (polyList[i].freezeLimit > 0)
 			frozenCount++;
-		/*if (polyList[i].collisionCnt > 0) // will not work
-			collisions++;*/
 	}
 	
 	char frozenLabel[5] = "";
@@ -508,11 +534,11 @@ void UpdateTitleBar()
 	strcat_s(label, 100, unfrozenLabel);
 	strcat_s(label, 100, " UNFROZEN STARS ");
 
-	// Collisions
-	/*char collisionLabel[5] = "";
-	ConvertToCharacterArray(TOTAL_COLLISIONS, collisionLabel);
-	strcat_s(label, 100, collisionLabel);
-	strcat_s(label, 100, " Collisions");*/
+	char timerLabel[5] = "";
+	ConvertToCharacterArray(GAME_SECONDS, timerLabel);
+	strcat_s(label, 100, " Game Time (Sec): ");
+	strcat_s(label, 100, timerLabel);
+	
 
 	glutSetWindowTitle(label);
 }
@@ -554,8 +580,15 @@ void Display()
 				cout << "star " << i << " : " << polyList[0].collisionCnt << endl;
 		}*/
 
+		// Update TIMER
+		if (gameOver == false) {
+			CTimeSpan gameTimer = CTime::GetCurrentTime() - startTime;
+			GAME_SECONDS = (int)gameTimer.GetTotalSeconds();
+			cout << GAME_SECONDS << endl;
+		}
+
 		// Help game along if we get stuck
-		if (TOTAL_COLLISIONS >= 100) { //end game if it goes on too long
+		if (TOTAL_COLLISIONS >= 250) { //end game if it goes on too long
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 1) {
 					polyList[i].collisionCnt = 1;
@@ -565,7 +598,7 @@ void Display()
 			}
 		}
 
-		if (TOTAL_COLLISIONS >= 150) { //end game if it goes on too long
+		if (TOTAL_COLLISIONS >= 450) { //end game if it goes on too long
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 2) {
 					polyList[i].collisionCnt = 2;
@@ -576,7 +609,7 @@ void Display()
 		}
 		
 		// Help game along if we get stuck
-		if (TOTAL_COLLISIONS >= 200) { //end game if it goes on too long
+		if (TOTAL_COLLISIONS >= 650) { //end game if it goes on too long
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 3) {
 					polyList[i].collisionCnt = 3;
@@ -586,7 +619,7 @@ void Display()
 			}
 		}
 
-		if (TOTAL_COLLISIONS >= 250) { //end game if it goes on too long
+		if (TOTAL_COLLISIONS >= 750) { //end game if it goes on too long
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 4) {
 					polyList[i].collisionCnt = 4;
@@ -596,7 +629,7 @@ void Display()
 			}
 		}
 
-		if (TOTAL_COLLISIONS >= 300) { //end game if it goes on too long
+		if (TOTAL_COLLISIONS >= 850) { //end game if it goes on too long
 			for (i = 0; i < NBR_STARS; i++) {
 				if (polyList[i].collisionCnt <= 5) {
 					polyList[i].collisionCnt = 5;

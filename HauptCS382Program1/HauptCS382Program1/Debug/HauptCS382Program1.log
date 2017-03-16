@@ -1,4 +1,19 @@
 ﻿  Stars.cpp
-c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(112): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(115): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(352): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(353): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(354): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(363): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(364): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(365): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(373): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(374): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(375): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(384): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(385): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(386): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(398): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(399): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\josh\documents\dev\cs382\hauptcs382program1\hauptcs382program1\stars.cpp(400): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   HauptCS382Program1.vcxproj -> C:\Users\Josh\Documents\Dev\CS382\HauptCS382Program1\Debug\HauptCS382Program1.exe
   HauptCS382Program1.vcxproj -> C:\Users\Josh\Documents\Dev\CS382\HauptCS382Program1\Debug\HauptCS382Program1.pdb (Full PDB)
